@@ -15,8 +15,11 @@ import time
 import requests
 
 import jconfig
+import logging
 from .utils import code_from_number, search_re, clean_string
 
+logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
+                        level=logging.DEBUG)
 
 DELAY = 0.34  # ~3 requests per second
 TOO_MANY_RPS_CODE = 6

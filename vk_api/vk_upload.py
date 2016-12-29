@@ -8,6 +8,7 @@
 Copyright (C) 2016
 """
 
+from logging import debug
 
 class VkUpload(object):
     def __init__(self, vk):
@@ -64,6 +65,60 @@ class VkUpload(object):
 
         # Сохраняем фото в альбоме
         response = self.vk.method('photos.save', values)
+
+        return response
+
+    def photoMarket(self, photos, group_id, main_photo=1,
+                    crop_x=None, crop_y=None, crop_width=None):
+        """ Загрузка изображений в альбом пользователя
+
+        :param photos: список путей к изображениям, либо путь к изображению
+        :param group_id: идентификатор сообщества (если загрузка идет в группу)
+        :param main_photo: является ли фотография обложкой товара (1 — фотография для обложки, 0 — дополнительная фотография)
+                            флаг, может принимать значения 1 или 0
+        :param crop_x: координата x для обрезки фотографии (верхний правый угол). положительное число
+        :param crop_y: координата y для обрезки фотографии (верхний правый угол). положительное число
+        :param crop_width: ширина фотографии после обрезки в px. положительное число, минимальное значение 400
+
+        """
+
+        values = {'group_id' : group_id, 'main_photo' : main_photo}
+        if crop_x:
+            values['crop_x'] = crop_x
+        if crop_y:
+            values['crop_y'] = crop_y
+        if crop_width:
+            values['crop_width'] = crop_width
+
+        debug("Values")
+        debug(values)
+
+        # Получаем ссылку для загрузки
+        url = self.vk.method('photos.getMarketUploadServer', values)['upload_url']
+
+        debug("UploadUrl: %s" % url)
+
+        # Загружаем
+        photos_files = open_files(photos)
+        response = self.vk.http.post(url, files=photos_files).json()
+        close_files(photos_files)
+
+        # Олег Илларионов:
+        # это не могу к сожалению просто пофиксить
+        #response['group_id'] = response['aid']
+
+        debug("Response: %s" % response)
+
+        response.update({
+            'group_id' : group_id,
+        })
+
+        values.update(response)
+
+        # Сохраняем фото в альбоме
+        response = self.vk.method('photos.saveMarketPhoto', values)
+
+        debug(response)
 
         return response
 
